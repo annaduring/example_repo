@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Let's start with some basics: how to enter strings in R, how to control how numbers are transformed to strings, and finally how to combine strings together to produce output that combines text and nicely formatted numbers.
 
-## Double quotes vs single quotes
+###### Double quotes vs single quotes
 Prefer double quotes (") to single quotes ('). 
 There are cases where you need both `'` and `"` inside the string. In this case, fall back to the first guideline and use " to define the string, but you'll have to escape any double quotes inside the string using a backslash (i.e. `\"`).
 
@@ -58,7 +58,7 @@ writeLines('To have a \\ you need \\\\')
 writeLines("This is a really\n\ really really\n\ long string")
 ```
 
-## Turning numbers into strings
+###### Turning numbers into strings
 ```{r}
 # Some vectors of numbers
 percent_change  <- c(4, -1.91, 3.00, -5.002)
@@ -135,7 +135,7 @@ formatC(percent_change, format = "f", digits = 1, flag = "+")
 formatC(p_values, format = "g", digits = 2)
 ```
 
-# Putting strings together with paste()
+###### Putting strings together with paste()
 ```{r}
 pretty_income <- c("72.19", "1030.18", "10291.93", "1189192.18")
 pretty_percent <- c("+4.0", "-1.9", "+3.0", "-5.0")
@@ -153,7 +153,7 @@ year_percent <- paste(years, sep = ": ", paste(pretty_percent,"%", sep = ""))
 paste(year_percent, collapse = ",")
 ```
 
-# A very simple table
+###### A very simple table
 ```{r}
 # Define the names vector
 income <- c(72.19, 1030.18, 10291.93, 1189192.18)
@@ -176,7 +176,7 @@ rows <- paste(formatted_names, dollar_income, sep = "   ")
 writeLines(rows)
 ```
 
-# another example
+###### another example
 ```{r}
 toppings <- c("anchovies", "artichoke", "bacon", "breakfast bacon",
  "Canadian bacon", "cheese", "chicken", "chili peppers",
@@ -205,6 +205,7 @@ writeLines(my_order)
 
 
 # Introducing stringr
+__str_c()__ joins multiple strings into A single string.
 ```{r}
 library(stringr)
 #Let's look at str_c(), the c is short for concatenate, a function that works like paste()
@@ -253,6 +254,8 @@ mean(girl_length) - mean(boy_length)
 # Confirm str_length() works with factors
 head(str_length(factor(boy_names)))
 ```
+
+__str_sub()__ extracts substrings from a character vector.
 ```{r}
 #str_sub() function in stringr extracts parts of strings based on their location.
 # Extract first letter from boy_names
@@ -274,8 +277,7 @@ girl_last_letter <- str_sub(girl_names, -1, -1)
 table(girl_last_letter)
 ```
 
-
-__str_detect()__ is used to answer the question: Does the string contain the pattern? It returns a logical vector of the same length as that of the input vector string
+__str_detect()__ is used to answer the question: Does the string contain the pattern? It returns a logical vector of the same length as that of the input vector string. the result is alwyas TRUE or FALSE
 
 ```{r}
 # Look for pattern "zz" in boy_names
@@ -291,8 +293,7 @@ sum(contains_zz)
 boy_names[contains_zz]
 ```
 
-__str_subset__  gets a new vector of strings, but it only contains those original strings that contained the pattern
-
+__str_subset()__  gets a new vector of strings, but it only contains those original strings that contained the pattern. the results is a vector with all matching patterns
 ```{r}
 #Find boy_names that contain "zz"
 str_subset(boy_names, "zz")
@@ -308,7 +309,264 @@ starts_U
 str_subset(starts_U, "z")
 ```
 
-__str_count()__` answers the question "How many times does the pattern occur in each string?".
+__str_count()__ answers the question "How many times does the pattern occur in each string?".
+```{r}
+# Count occurrences of "a" in girl_names
+number_as <- str_count(girl_names, "a")
+
+# Count occurrences of "A" in girl_names
+number_As <- str_count(girl_names, "A")
+
+# Histograms of number_as and number_As
+hist(number_as)
+hist(number_As)  
+
+# Find total "a" + "A"
+total_as <- number_as + number_As
+
+# girl_names with more than 4 a's
+girl_names[total_as > 4]
+```
+
+__str_split__ split the string into pieces and returns a list or  matrix if `simplify = TRUE`
+```{r}
+# Some date data
+date_ranges <- c("23.01.2017 - 29.01.2017", "30.01.2017 - 06.02.2017")
+
+# Split dates using " - ": CREATE A LIST
+split_dates <- str_split(date_ranges, pattern = fixed(" - "))
+split_dates
+```
+
+```{r}
+# Some date data
+date_ranges <- c("23.01.2017 - 29.01.2017", "30.01.2017 - 06.02.2017")
+
+# Split dates using " - " CREATE A MATRIX
+split_dates_n <- str_split(date_ranges, pattern = fixed(" - "), simplify = T, n = 2)
+split_dates_n
+```
+
+
+```{r}
+# From previous step
+date_ranges <- c("23.01.2017 - 29.01.2017", "30.01.2017 - 06.02.2017")
+split_dates_n <- str_split(date_ranges, fixed(" - "), n = 2, simplify = TRUE)
+
+# Subset split_dates_n into start_dates and end_dates
+start_dates <- split_dates_n[,1]
+
+# Split start_dates into day, month and year pieces
+str_split(start_dates, fixed("."),  simplify = TRUE)
+```
+
+```{r}
+# From previous step
+date_ranges <- c("23.01.2017 - 29.01.2017", "30.01.2017 - 06.02.2017")
+split_dates_n <- str_split(date_ranges, fixed(" - "), n = 2, simplify = TRUE)
+
+# Subset split_dates_n into start_dates and end_dates
+start_dates <- split_dates_n[,1]
+
+# Split start_dates into day, month and year pieces
+str_split(start_dates, fixed("."),  simplify = TRUE)
+```
+
+```{r}
+both_names <- c("Box, George", "Cox, David")
+
+# Split both_names into first_names and last_names
+both_names_split <- str_split(both_names, pattern = fixed(", "), simplify = TRUE)
+
+# Get first names
+first_names <- both_names_split[,2]
+first_names
+
+# Get last names
+last_names <- both_names_split[,1]
+last_names
+```
+
+Split lines into words where punctuations is included in the word
+```{r}
+# Split lines into words
+words <- str_split(lines, pattern = c(" "))
+
+# Number of words per line
+lapply(words, length)
+  
+# Number of characters in each word
+word_lengths <- lapply(words, str_length)
+  
+# Average word length per line
+lapply(word_lengths,mean)
+
+#The length() function returns the length of a vector (e.g. the number of words in each line) 
+#the str_length() function returns the number of characters (e.g. in each word.)
+```
+
+Split lines into words where punctuations is NOT included in the word: __str_replace()__ ad __str_replace_all()__
+```{r}
+#ex 1: Some IDs
+ids <- c("ID#: 192", "ID#: 118", "ID#: 001")
+
+# Replace "ID#: " with ""
+id_nums <- str_replace_all(ids, "ID#: ", "")
+
+# Turn id_nums into numbers
+id_ints <- as.numeric(id_nums)
+
+#Ex 2: Some (fake) phone numbers
+phone_numbers <- c("510-555-0123", "541-555-0167")
+
+# Use str_replace() to replace "-" with " "
+str_replace(phone_numbers, "-", " ")
+
+# Use str_replace_all() to replace "-" with " "
+str_replace_all(phone_numbers, "-", " ")
+
+# Turn phone numbers into the format xxx.xxx.xxxx
+str_replace_all(phone_numbers, "-", ".")
+```
+
+recap: 
+```{r}
+# Define some full namessubset()
+names <- c("Diana Prince", "Clark Kent")
+
+# Split into first and last names
+names_split <- str_split(names, pattern = fixed(" "), simplify = TRUE)
+
+# Extract the first letter in the first name
+abb_first <- str_sub(names_split[,1], 1, 1)
+
+# Combine the first letter ". " and last name
+str_c(abb_first, ". ", names_split[,2])
+```
+
 
 # Pattern matching with regular expressions
+
+
+
+
+a language for describing patterns
+^.[\d]+
+^ the start of the string, 
+. followed by any single character, 
+[\d]+ followed by one or more digits
+
+START = 
+END   = $
+ANY_CHAR = .
+DOT = \.
+
+__str_view __ View HTML rendering of regular expression match.
+
+```{r}
+library(rebus.base)
+# Some strings to practice with
+x <- c("cat", "coat", "scotland", "tic toc")
+
+# Match the strings that start with "co" 
+str_view(x, pattern = START %R% "co")
+
+# Match the strings that end with "at"
+str_view(x, pattern = "at" %R% END)
+
+# Match the string that is exactly "cat"
+str_view(x, pattern = exactly("cat"))
+
+# Match two characters, where the second is a "t"
+str_view(x, pattern = ANY_CHAR %R% "t")
+
+# Match a "t" followed by any character
+str_view(x, pattern = "t" %R% ANY_CHAR)
+
+# Match two characters
+#Notice the first two characters are matched. Regular expression are lazy and will take the first match they find.
+str_view(x, pattern = ANY_CHAR %R% ANY_CHAR)
+
+# Match a string with exactly three characters
+str_view(x, pattern = START %R% ANY_CHAR %R% ANY_CHAR %R% ANY_CHAR %R% END)
+
+#Combine  regular expression with stringr
+pattern <- "q" %R% ANY_CHAR
+
+# Find names that have the pattern
+names_with_q <- str_subset(boy_names, pattern = pattern)
+
+# How many names were there?
+length(names_with_q)
+
+## Find part of name that matches pattern
+part_with_q <- str_extract(boy_names, pattern)
+
+# Get a table of counts
+table(part_with_q)
+
+## Did any names have the pattern more than once?
+count_of_q <- str_count(boy_names, pattern)
+
+# Get a table of counts
+table(count_of_q)
+
+##Get a logical vector of whether or not each boy's name contains q*
+with_q <- str_detect(boy_names, pattern = "q" %R% ANY_CHAR)
+
+# What fraction of babies got these names?
+mean(with_q)
+
+```
+
+Alternation = (cat|dog)
+
+pattern = char_class ("Aa") atch both __a__ pple and __A__ aron
+
+pattern = negated_char_class ("Aa") match both a __p__ ple and Aa __r__ on
+
+optional() = ?
+
+Zero_or_more() = * 
+one_or_more() = +
+repeated() = {n}{m} - between n and M times
+
+pattern = one_or_more("Aa") => __a__ pple, __Aa__ ron
+
+```{r}
+# Match Jeffrey or Geoffrey
+whole_names <- or("Jeffrey","Geoffrey") 
+str_view(boy_names, pattern = whole_names, match = TRUE)
+#OR
+# Match Jeffrey or Geoffrey, another way
+common_ending <- or("Je", "Geo") %R% "ffrey"
+str_view(boy_names, pattern = common_ending, match = TRUE)
+
+
+# Match with alternate endings
+by_parts <- or("Je", "Geo") %R% "ff" %R% or("ry", "ery", "rey", "erey")
+str_view(boy_names, pattern = by_parts, match = TRUE)
+
+# Match names that start with Cath or Kath
+ckath <- or("C", "K") %R% "ath"
+str_view(girl_names, pattern = ckath, match = TRUE)
+
+
+#Create a character class that contains vowels, a, e, i, o, u and their upper case versions.
+vowels <- char_class("Aa", "Ee", "Ii", "Oo", "Uu")
+
+# Print vowels
+vowels
+
+# See vowels in x with str_view()
+#only the first vowel is matched.
+str_view(x, pattern = vowels)
+
+# See vowels in x with str_view_all()
+str_view_all(x, vowels)
+
+```
+
+
+
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
