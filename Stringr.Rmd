@@ -900,8 +900,44 @@ table(who)
 ```
 
 another case study on cats :)
+__whole_word()__ will only match if it occurs as a word on it's own
 ```{r echo = FALSE}
 catcidents <- readLines("catcidents.rds")
+```
+```{r}
+# Construct pattern of DOG in boundaries
+whole_dog_pattern <- whole_word("DOG")
+
+# See matches to word DOG
+str_view(catcidents, whole_dog_pattern, match = TRUE)
+
+# Transform catcidents to upper case
+catcidents_upper <- str_to_upper(catcidents)
+
+# View matches to word "DOG" again
+str_view(catcidents_upper, whole_dog_pattern, match = TRUE)
+
+# Which strings match?
+has_dog <- str_detect(catcidents_upper, whole_dog_pattern)
+
+# Pull out matching strings in original 
+catcidents[has_dog]
+
+####Ignoring case when matching 
+#View matches to "TRIP"
+str_view(catcidents, "TRIP", match = TRUE)
+
+# Construct case insensitive pattern
+trip_pattern <- regex("TRIP", ignore_case = TRUE)
+
+# View case insensitive matches to "TRIP"
+str_view(catcidents, trip_pattern, match = TRUE)
+
+# Get subset of matches
+trip <- str_subset(catcidents, trip_pattern)
+
+# Extract matches
+str_extract(trip, trip_pattern)
 ```
 
 
