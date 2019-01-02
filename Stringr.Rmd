@@ -708,4 +708,202 @@ ifelse(time_units_clean == "Y", ages_numeric, ages_numeric / 12)
 __If you want a challenge, get the neiss package and see if you can extract age and gender from all accidents__
 
 
+__str_match()__ returns a matrix of matched results based on a pattern
+__capture()__ is used to denote a part of a regular expression you want to capture and isolate is fromt he rest
+```{r}
+hero_contacts <- c("(wolverine@xmen.com)", "wonderwoman@justiceleague.org", "thor@avengers.com")
+
+# Capture parts between @ and . and after .
+email <- capture(one_or_more(WRD)) %R% 
+  "@" %R% capture(one_or_more(WRD)) %R% 
+  DOT %R% capture(one_or_more(WRD))
+
+# Check match hasn't changed
+str_view(hero_contacts, pattern = email)
+  
+# Pull out match and captures
+email_parts <- str_match(hero_contacts, pattern = email)
+email_parts
+
+# Save host
+host <- email_parts[,3]
+host
+
+
+# Pulling out parts of a phone number 
+#Add capture() to get digit parts
+phone_pattern <- capture(three_digits) %R% zero_or_more(separator) %R% 
+           capture(three_digits) %R% zero_or_more(separator) %R%
+           capture(four_digits)
+           
+# Pull out the parts with str_match()
+phone_numbers <- str_match(contact, pattern = phone_pattern)
+
+# Put them back together
+str_c(
+  "(",
+  phone_numbers[,2],
+  ") ",
+  phone_numbers[,3],
+  "-",
+  phone_numbers[,4])
+
+
+# narratives has been pre-defined
+narratives
+
+# Add capture() to get age, unit and sex
+pattern <- capture(optional(DGT) %R% DGT) %R%  
+  optional(SPC) %R% capture(or("Y", "M")) %R% optional(or("O", "R")) %R%
+  optional(SPC) %R% capture(or("M", "F"))
+
+# Pull out from narratives
+str_match(narratives, pattern = pattern) 
+#Extracting age and gender again
+
+```
+
+Backrefernces are used to refer to captured patterns and, more importantly, to allow to find repeated patterns or words.
+
+```{r}
+str_view(c("hello", "sweet", "kitten"), 
+  pattern = capture(LOWER) %R% REF1)
+#It matches and captures any lower case character, then is followed by the captured character: it detects repeated characters regardless of what character is repeated.
+
+#f you capture more than one thing you can refer to them with REF2, REF3 etc. up to REF9, counting the captures from the left of the pattern.
+
+# Names with THREE repeated letters  e.g. annna: 
+#To match three lower case letter repeats,  use REF1 twice
+repeated_three_times <- capture(LOWER) %R% REF1 %R% REF1
+
+# Test it
+str_view(boy_names, pattern = repeated_three_times, match = TRUE)
+
+# Names with a pair of repeated letters: e.g. abab
+pair_of_repeated <- capture(LOWER %R% LOWER) %R% REF1
+
+# Test it
+str_view(boy_names, pattern = pair_of_repeated, match = TRUE)
+
+
+# Names with a pair that reverses: e.g. abba
+pair_that_reverses <- capture(LOWER) %R% capture(LOWER) %R% REF2 %R% REF1
+
+# Test it
+str_view(boy_names, pattern = pair_that_reverses, match = TRUE)
+
+# Four letter palindrome names: e.g. anna
+four_letter_palindrome <- exactly(capture(LOWER) %R% capture(LOWER) %R% REF2 %R% REF1)
+
+# Test it
+str_view(boy_names, pattern = four_letter_palindrome, match = TRUE)
+
+```
+```{r, echo = FALSE}
+adverbs <- readRDS("adverbs.rds")
+
+```
+```{r}
+# Build pattern to match words ending in "ING"
+pattern <- one_or_more(WRD) %R% "ING"
+str_view(narratives, pattern = pattern,  match = TRUE)
+
+# Test replacement
+str_replace(narratives, capture(pattern), str_c("CARELESSLY", REF1, sep = " "))
+
+# One adverb per narrative
+adverbs_10 <- sample(adverbs, 10)
+
+# Replace "***ing" with "adverb ***ly"
+str_replace(narratives, capture(pattern), str_c(adverbs_10, REF1, sep = " "))
+```
+
+Case study: the importance of being ernest
+```{r echo = FALSE}
+earnest <- readLines("importance-of-being-earnest.txt")
+```
+
+```{r}
+# Read play in using stri_read_lines()
+#earnest <- stri_read_lines(earnest_file)
+
+# Detect start and end lines
+start <- str_which(earnest, fixed("START OF THE PROJECT"))
+end <- str_which(earnest, fixed("END OF THE PROJECT"))
+
+# Get rid of gutenberg intro text
+earnest_sub  <- earnest[(start + 1):(end - 1)]
+
+# Detect first act
+lines_start <- str_which(earnest_sub, fixed("FIRST ACT"))
+
+# Set up index
+intro_line_index <- 1:(lines_start - 1)
+
+# Split play into intro and play
+intro_text <- earnest_sub[intro_line_index]
+play_text <- earnest_sub[-intro_line_index]
+
+# Take a look at the first 20 lines
+writeLines(head(play_text, 20))
+
+#delete all the empty lines
+# Get rid of empty strings
+empty <- stringi::stri_isempty(play_text)
+play_lines <- play_text[!empty]
+
+##Find the elements that indicate a character
+# Build a pattern that matches the start of the line, followed by one or more word characters, then a period
+pattern_1 <- START %R% one_or_more(WRD) %R% DOT
+
+# Test pattern_1
+# str_view(play_lines, pattern_1, match = TRUE)
+# str_view(play_lines, pattern_1, match = FALSE)
+
+# Pattern for start, CAPITAL, word then .
+pattern_2 <- START %R% ascii_upper() %R% one_or_more(WRD) %R% DOT
+
+# Test pattern_2
+# str_view(play_lines, pattern_2, match = TRUE)
+# str_view(play_lines, pattern_2, match = FALSE)
+
+# Get subset of lines that match
+lines <- str_subset(play_lines, pattern_2)
+
+# Extract match from lines
+who <- str_extract(lines, pattern_2)
+
+# Let's see what we have
+unique(who)
+
+#another way how to identify the lines: Create vector of characters
+characters <- c("Algernon", "Jack", "Lane", "Cecily", "Gwendolen", "Chasuble", 
+  "Merriman", "Lady Bracknell", "Miss Prism")
+
+# Match start, then character name, then .
+pattern_3 <- START %R% or1(characters) %R% DOT
+
+# View matches of pattern_3
+#str_view(play_lines, pattern_3, match = TRUE)
+
+# Pull out matches
+lines <- str_subset(play_lines, pattern_3)
+
+# Extract match from lines
+who <- str_extract(lines, pattern_3)
+
+# Let's see what we have
+unique(who)
+
+# Count lines per character
+table(who)
+```
+
+another case study on cats :)
+```{r echo = FALSE}
+catcidents <- readLines("catcidents.rds")
+```
+
+
+
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
